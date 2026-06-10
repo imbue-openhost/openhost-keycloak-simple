@@ -1,0 +1,25 @@
+[app]
+name = "keycloak"
+version = "0.1.0"
+description = "Keycloak identity and access management server with OpenHost owner SSO"
+authors = ["Andrew Laack <andrew@laack.co>"]
+
+[runtime.container]
+image = "Dockerfile"
+port = 8080
+
+[routing]
+health_check = "/_healthz"
+# Realm endpoints (OIDC/SAML flows, account console) and theme assets must be
+# reachable by anonymous visitors so external apps and users can authenticate
+# against this Keycloak. The /admin console stays gated behind OpenHost auth.
+# MUST mirror PUBLIC_PATHS in auth_proxy.py.
+public_paths = ["/realms/", "/resources/", "/robots.txt"]
+
+[resources]
+memory_mb = 2048
+cpu_millicores = 2000
+
+[data]
+app_data = true
+app_temp_data = true
