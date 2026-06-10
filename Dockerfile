@@ -15,7 +15,7 @@ RUN /opt/keycloak/bin/kc.sh build
 
 FROM registry.access.redhat.com/ubi9-minimal
 
-RUN microdnf install -y java-21-openjdk-headless python3 shadow-utils util-linux-core \
+RUN microdnf install -y java-21-openjdk-headless python3 shadow-utils util-linux \
     && microdnf clean all \
     && useradd --system --uid 1000 --create-home --home-dir /home/keycloak keycloak
 
