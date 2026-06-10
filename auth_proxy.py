@@ -54,6 +54,16 @@ PUBLIC_PATHS = ("/realms/", "/resources/", "/robots.txt")
 
 SESSION_COOKIE = "KEYCLOAK_IDENTITY"
 
+# Keycloak scopes its session cookies to Path=/realms/master/, so the browser
+# never sends them on /admin or / navigations — the proxy cannot see them to
+# know the owner is already logged in. Without a tracker the proxy would
+# re-run the login dance on every owner navigation (an infinite redirect loop
+# on /). We therefore set our own Path=/ marker cookie alongside the Keycloak
+# cookies. It expires before Keycloak's default 30-minute SSO idle timeout so
+# an expired Keycloak session simply triggers a fresh (silent) auto-login.
+MARKER_COOKIE = "OPENHOST_KC_SSO"
+MARKER_MAX_AGE = 25 * 60
+
 HOP_BY_HOP = {
     "connection",
     "keep-alive",
@@ -345,6 +355,8 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
         if "text/html" not in self.headers.get("Accept", "").lower():
             return False
         cookies = self.headers.get("Cookie", "")
+        if f"{MARKER_COOKIE}=" in cookies:
+            return False
         return f"{SESSION_COOKIE}=" not in cookies
 
     def try_auto_login(self) -> bool:
@@ -360,6 +372,10 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Location", self.path)
         for cookie in session_cookies:
             self.send_header("Set-Cookie", cookie)
+        self.send_header(
+            "Set-Cookie",
+            f"{MARKER_COOKIE}=1;Path=/;Max-Age={MARKER_MAX_AGE};Secure;HttpOnly;SameSite=Lax",
+        )
         self.send_header("Content-Length", "0")
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
