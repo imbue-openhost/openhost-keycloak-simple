@@ -8,6 +8,7 @@
 FROM quay.io/keycloak/keycloak:26.3 AS builder
 
 ENV KC_DB=dev-file
+ENV KC_CACHE=local
 ENV KC_HEALTH_ENABLED=true
 ENV KC_HTTP_RELATIVE_PATH=/
 
